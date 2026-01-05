@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云计算期末大作业 - Docker镜像构建 实施流程</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            color: #333;
+            background-color: #f5f7fa;
+            padding: 10px;
+            overflow-x: hidden;
+            font-size: 15px;
+        }
+        
+        .container {
+            max-width: 100%;
+            min-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 1.6em;
+        }
+        
+        /* 主要架构容器 */
+        .architecture-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* 模块容器样式 */
+        .module {
+            width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+        
+        /* 大虚线框 */
+        .big-dashed-box {
+            width: 100%;
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 12px;
+            background-color: #f0f8ff;
+            position: relative;
+        }
+        
+        /* 大框标题 */
+        .big-box-title {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background-color: #007bff;
+            color: white;
+            padding: 3px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 1em;
+        }
+        
+        /* 彩色背景模块 */
+        .colored-module {
+            border: 2px dashed;
+            border-radius: 8px;
+            padding: 12px;
+            min-width: 280px;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        
+        /* 紫色模块（步骤1/5） */
+        .purple-module {
+            background-color: #f3e5f5;
+            border-color: #9c27b0;
+        }
+        
+        .purple-module .module-title {
+            background-color: #9c27b0;
+        }
+        
+        /* 蓝色模块（步骤2） */
+        .blue-module {
+            background-color: #e3f2fd;
+            border-color: #2196F3;
+        }
+        
+        .blue-module .module-title {
+            background-color: #2196F3;
+        }
+        
+        /* 绿色模块（步骤3/6） */
+        .green-module {
+            background-color: #e8f5e9;
+            border-color: #4caf50;
+        }
+        
+        .green-module .module-title {
+            background-color: #4caf50;
+        }
+        
+        /* 黄色模块（步骤4） */
+        .yellow-module {
+            background-color: #fff8e1;
+            border-color: #ff9800;
+        }
+        
+        .yellow-module .module-title {
+            background-color: #ff9800;
+        }
+        
+        /* 模块标题 */
+        .module-title {
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        /* 功能描述 */
+        .function-description {
+            margin-bottom: 10px;
+            text-align: center;
+            padding: 0 8px;
+            line-height: 1.4;
+            font-size: 0.95em;
+        }
+        
+        /* 二级模块容器 */
+        .secondary-modules {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        /* 二级模块 */
+        .secondary-module {
+            border: 1px solid;
+            border-radius: 6px;
+            padding: 10px;
+            min-width: 200px;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        /* 二级模块标题 */
+        .secondary-module-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.9em;
+            text-align: center;
+            width: 100%;
+        }
+        
+        /* 步骤列表 */
+        .step-list {
+            margin-top: 6px;
+            padding-left: 18px;
+            text-align: left;
+            width: 100%;
+        }
+        
+        .step-list li {
+            margin-bottom: 4px;
+            font-size: 0.85em;
+            line-height: 1.3;
+        }
+        
+        .secondary-module p {
+            font-size: 0.85em;
+            text-align: left;
+            margin-bottom: 8px;
+            line-height: 1.3;
+            width: 100%;
+        }
+        
+        /* 命令行样式 */
+        .cmd-code {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px;
+            font-family: Consolas, monospace;
+            font-size: 0.8em;
+            margin: 4px 0;
+            overflow-x: auto;
+            width: 100%;
+        }
+        
+        /* 横屏优化 */
+        @media (orientation: landscape) {
+            body {
+                font-size: 14px;
+            }
+            
+            .container {
+                max-height: 100vh;
+                overflow-y: auto;
+            }
+            
+            .secondary-modules {
+                gap: 8px;
+            }
+            
+            .secondary-module {
+                min-width: 180px;
+                padding: 8px;
+            }
+        }
+        
+        /* 大屏幕横屏优化 */
+        @media (orientation: landscape) and (min-width: 1200px) {
+            .secondary-module {
+                min-width: 200px;
+            }
+        }
+
+        /* 小屏幕适配 */
+        @media (max-width: 768px) {
+            .container {
+                min-width: 100%;
+            }
+            .secondary-modules {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>云计算期末大作业 - Docker镜像构建 实施流程</h1>
+        
+        <div class="architecture-flow">
+            <!-- 总体描述 -->
+            <div class="module">
+                <div class="big-dashed-box">
+                    <div class="big-box-title">流程总述</div>
+                    <div class="function-description">
+                        围绕Docker镜像构建作业，梳理仓库创建、工具准备、项目搭建、远程连接、实验实施、提交运维六大核心环节，形成标准化作业流程。
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 六大核心步骤模块 -->
+            <div class="module">
+                <div class="big-dashed-box">
+                    <div class="big-box-title">六大核心实施步骤</div>
+                    
+                    <!-- 步骤1：GitHub创建仓库 -->
+                    <div class="module">
+                        <div class="colored-module purple-module" style="width: 100%;">
+                            <div class="module-title">步骤1：创建GitHub仓库</div>
+                            <div class="function-description">
+                                搭建作业代码托管基础，创建符合命名规范的公开仓库。
+                            </div>
+                            
+                            <div class="secondary-modules">
+                                <div class="secondary-module" style="border-color: #9c27b0;">
+                                    <div class="secondary-module-title">核心操作</div>
+                                    <ul class="step-list">
+                                        <li>创建公开仓库，按规范命名（如cloud-final-23计科1-第01组-A6）</li>
+                                        <li>填写作业相关描述，不初始化README等文件</li>
+                                        <li>保存仓库远程地址，用于后续关联</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 步骤2：Windows准备工具 -->
+                    <div class="module">
+                        <div class="colored-module blue-module" style="width: 100%;">
+                            <div class="module-title">步骤2：部署基础工具</div>
+                            <div class="function-description">
+                                安装版本控制（Git）和容器化（Docker）核心工具。
+                            </div>
+                            
+                            <div class="secondary-modules">
+                                <div class="secondary-module" style="border-color: #2196F3;">
+                                    <div class="secondary-module-title">Git安装</div>
+                                    <ul class="step-list">
+                                        <li>下载官方安装包，默认配置完成安装</li>
+                                    </ul>
+                                </div>
+                                <div class="secondary-module" style="border-color: #2196F3;">
+                                    <div class="secondary-module-title">Docker Desktop安装</div>
+                                    <ul class="step-list">
+                                        <li>下载安装后重启，验证启动状态</li>
+                                        <li>家庭版需装WSL2，专业版开启Hyper-V</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 步骤3：本地创建项目 -->
+                    <div class="module">
+                        <div class="colored-module green-module" style="width: 100%;">
+                            <div class="module-title">步骤3：搭建本地项目</div>
+                            <div class="function-description">
+                                按规范创建项目目录结构，准备基础文档文件。
+                            </div>
+                            
+                            <div class="secondary-modules">
+                                <div class="secondary-module" style="border-color: #4caf50;">
+                                    <div class="secondary-module-title">目录结构</div>
+                                    <div class="cmd-code">
+cloud-final-A6/<br>
+├── report/（作业报告）<br>
+├── slides/（演示文稿）<br>
+├── src/（实验代码）<br>
+├── assets/（资源文件）
+                                    </div>
+                                </div>
+                                <div class="secondary-module" style="border-color: #4caf50;">
+                                    <div class="secondary-module-title">基础文件</div>
+                                    <ul class="step-list">
+                                        <li>report目录：作业报告MD文件</li>
+                                        <li>根目录：README.md、选题列表.md</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 步骤4：连接本地和GitHub -->
+                    <div class="module">
+                        <div class="colored-module yellow-module" style="width: 100%;">
+                            <div class="module-title">步骤4：关联远程仓库</div>
+                            <div class="function-description">
+                                建立本地项目与GitHub仓库的版本控制关联。
+                            </div>
+                            
+                            <div class="secondary-modules">
+                                <div class="secondary-module" style="border-color: #ff9800;">
+                                    <div class="secondary-module-title">Git命令行（推荐）</div>
+                                    <div class="cmd-code">
+# 初始化→提交→关联远程→推送主分支<br>
+git init &amp;&amp; git add . &amp;&amp; git commit -m "初始提交"<br>
+git remote add origin 仓库地址 &amp;&amp; git push -u origin main<br>
+# 创建并推送组分支<br>
+git checkout -b 组分支名 &amp;&amp; git push -u origin 组分支名
+                                    </div>
+                                </div>
+                                <div class="secondary-module" style="border-color: #ff9800;">
+                                    <div class="secondary-module-title">图形化方式</div>
+                                    <ul class="step-list">
+                                        <li>GitHub Desktop克隆仓库，复制文件后提交推送</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 步骤5：Docker镜像构建实验 -->
+                    <div class="module">
+                        <div class="colored-module purple-module" style="width: 100%;">
+                            <div class="module-title">步骤5：实施Docker实验</div>
+                            <div class="function-description">
+                                编写镜像配置和Web页面，完成构建与运行验证。
+                            </div>
+                            
+                            <div class="secondary-modules">
+                                <div class="secondary-module" style="border-color: #9c27b0;">
+                                    <div class="secondary-module-title">核心配置</div>
+                                    <div class="cmd-code">
+# src/Dockerfile（基于Nginx构建Web镜像）<br>
+FROM nginx:alpine<br>
+COPY index.html /usr/share/nginx/html/<br>
+EXPOSE 80
+                                    </div>
+                                </div>
+                                <div class="secondary-module" style="border-color: #9c27b0;">
+                                    <div class="secondary-module-title">构建运行</div>
+                                    <div class="cmd-code">
+# 构建镜像→运行容器→验证访问<br>
+docker build -t my-webapp:v1 .<br>
+docker run -d -p 8080:80 webapp<br>
+# 访问 http://localhost:8080 验证效果
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 步骤6：提交更新与问题解决 -->
+                    <div class="module">
+                        <div class="colored-module green-module" style="width: 100%;">
+                            <div class="module-title">步骤6：提交与运维</div>
+                            <div class="function-description">
+                                实时提交作业进度，解决常见版本控制/容器化问题。
+                            </div>
+                            
+                            <div class="secondary-modules">
+                                <div class="secondary-module" style="border-color: #4caf50;">
+                                    <div class="secondary-module-title">进度提交</div>
+                                    <div class="cmd-code">
+git add . &amp;&amp; git commit -m "更新描述" &amp;&amp; git push
+                                    </div>
+                                </div>
+                                <div class="secondary-module" style="border-color: #4caf50;">
+                                    <div class="secondary-module-title">常见问题</div>
+                                    <ul class="step-list">
+                                        <li>权限报错：配置git用户名/邮箱</li>
+                                        <li>推送失败：拉取远程分支最新内容</li>
+                                        <li>Docker启动失败：检查虚拟化配置</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', () => {
+            if (window.innerWidth < 768) {
+                document.querySelectorAll('.secondary-modules').forEach(module => {
+                    module.style.flexDirection = 'column';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
